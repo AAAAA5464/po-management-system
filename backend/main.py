@@ -1,4 +1,3 @@
-# main.py - App ka Starting Point
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,8 +6,8 @@ from routers import vendors, products, purchase_orders,ai
 
 # FastAPI app banao
 app = FastAPI(
-    title="PO Management System",
-    description="IV Innovations - Purchase Order Management",
+    title="PO Management System API",
+    description="Backend API for managing vendors, products and purchase orders.",
     version="1.0.0"
 )
 
