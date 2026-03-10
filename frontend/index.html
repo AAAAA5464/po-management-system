@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PO Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; }
+        .sidebar {
+            height: 100vh;
+            background: linear-gradient(180deg, #1a237e, #283593);
+            position: fixed;
+            width: 250px;
+            padding-top: 20px;
+        }
+        .sidebar .brand {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 10px;
+        }
+        .sidebar a {
+            color: rgba(255,255,255,0.8);
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left: 4px solid #64b5f6;
+        }
+        .sidebar a i { margin-right: 10px; }
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+        }
+        .stat-card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .page { display: none; }
+        .page.active { display: block; }
+        .badge-draft     { background: #6c757d; }
+        .badge-confirmed { background: #0d6efd; }
+        .badge-received  { background: #198754; }
+        .badge-cancelled { background: #dc3545; }
+        .product-row { background: #f8f9fa; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .ai-desc-box { background: #e3f2fd; border-left: 4px solid #1976d2; padding: 10px; border-radius: 5px; margin-top: 5px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="brand">
+        <i class="fas fa-shopping-cart"></i> PO Manager
+    </div>
+    <a href="#" class="active" onclick="showPage('dashboard')">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="#" onclick="showPage('orders')">
+        <i class="fas fa-file-invoice"></i> Purchase Orders
+    </a>
+    <a href="#" onclick="showPage('create-po')">
+        <i class="fas fa-plus-circle"></i> Create New PO
+    </a>
+    <a href="#" onclick="showPage('vendors')">
+        <i class="fas fa-truck"></i> Vendors
+    </a>
+    <a href="#" onclick="showPage('products')">
+        <i class="fas fa-box"></i> Products
+    </a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+    <!-- DASHBOARD PAGE -->
+    <div id="dashboard" class="page active">
+        <h2 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card text-white" style="background: linear-gradient(135deg,#1a237e,#3949ab)">
+                    <div class="card-body">
+                        <h6>Total Orders</h6>
+                        <h2 id="total-orders">0</h2>
+                        <i class="fas fa-file-invoice fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card text-white" style="background: linear-gradient(135deg,#1b5e20,#388e3c)">
+                    <div class="card-body">
+                        <h6>Total Vendors</h6>
+                        <h2 id="total-vendors">0</h2>
+                        <i class="fas fa-truck fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card text-white" style="background: linear-gradient(135deg,#e65100,#f57c00)">
+                    <div class="card-body">
+                        <h6>Total Products</h6>
+                        <h2 id="total-products">0</h2>
+                        <i class="fas fa-box fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card text-white" style="background: linear-gradient(135deg,#880e4f,#c2185b)">
+                    <div class="card-body">
+                        <h6>Total Amount</h6>
+                        <h2 id="total-amount">₹0</h2>
+                        <i class="fas fa-rupee-sign fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><b>Recent Purchase Orders</b></div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead><tr>
+                        <th>Reference No</th>
+                        <th>Vendor</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr></thead>
+                    <tbody id="dashboard-orders"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PURCHASE ORDERS PAGE -->
+    <div id="orders" class="page">
+        <h2 class="mb-4"><i class="fas fa-file-invoice"></i> Purchase Orders</h2>
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead><tr>
+                        <th>Reference No</th>
+                        <th>Vendor ID</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr></thead>
+                    <tbody id="orders-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE PO PAGE -->
+    <div id="create-po" class="page">
+        <h2 class="mb-4"><i class="fas fa-plus-circle"></i> Create New Purchase Order</h2>
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><b>Select Vendor</b></label>
+                    <select id="vendor-select" class="form-select">
+                        <option value="">-- Select Vendor --</option>
+                    </select>
+                </div>
+                <hr>
+                <h5>Products</h5>
+                <div id="product-rows"></div>
+                <button class="btn btn-secondary mt-2" onclick="addProductRow()">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4 offset-md-8">
+                        <table class="table">
+                            <tr><td>Subtotal:</td><td id="subtotal">₹0</td></tr>
+                            <tr><td>Tax (5%):</td><td id="tax">₹0</td></tr>
+                            <tr class="table-dark"><td><b>Total:</b></td><td><b id="grand-total">₹0</b></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-lg w-100" onclick="submitPO()">
+                    <i class="fas fa-paper-plane"></i> Submit Purchase Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VENDORS PAGE -->
+    <div id="vendors" class="page">
+        <h2 class="mb-4"><i class="fas fa-truck"></i> Vendors</h2>
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead><tr>
+                        <th>ID</th><th>Name</th><th>Contact</th><th>Rating</th>
+                    </tr></thead>
+                    <tbody id="vendors-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCTS PAGE -->
+    <div id="products" class="page">
+        <h2 class="mb-4"><i class="fas fa-box"></i> Products</h2>
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead><tr>
+                        <th>ID</th><th>Name</th><th>SKU</th>
+                        <th>Price</th><th>Stock</th><th>Category</th><th>AI</th>
+                    </tr></thead>
+                    <tbody id="products-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = 'http://localhost:8000/api';
+let allProducts = [];
+let allVendors  = [];
+
+// ── PAGE NAVIGATION ─────────────────────────
+function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
+    event.target.closest('a').classList.add('active');
+
+    if (page === 'dashboard')  loadDashboard();
+    if (page === 'orders')     loadOrders();
+    if (page === 'vendors')    loadVendors();
+    if (page === 'products')   loadProducts();
+    if (page === 'create-po')  loadCreatePO();
+}
+
+// ── DASHBOARD ──────────────────────────────
+async function loadDashboard() {
+    const [orders, vendors, products] = await Promise.all([
+        fetch(`${API}/orders/`).then(r => r.json()),
+        fetch(`${API}/vendors/`).then(r => r.json()),
+        fetch(`${API}/products/`).then(r => r.json()),
+    ]);
+
+    document.getElementById('total-orders').textContent   = orders.length;
+    document.getElementById('total-vendors').textContent  = vendors.length;
+    document.getElementById('total-products').textContent = products.length;
+
+    const total = orders.reduce((sum, o) => sum + o.total_amount, 0);
+    document.getElementById('total-amount').textContent = '₹' + total.toFixed(2);
+
+    const tbody = document.getElementById('dashboard-orders');
+    tbody.innerHTML = orders.slice(0,5).map(o => `
+        <tr>
+            <td>${o.reference_no}</td>
+            <td>Vendor #${o.vendor_id}</td>
+            <td>₹${o.total_amount}</td>
+            <td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td>
+            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+        </tr>`).join('');
+}
+
+// ── ORDERS ─────────────────────────────────
+async function loadOrders() {
+    const orders = await fetch(`${API}/orders/`).then(r => r.json());
+    const tbody  = document.getElementById('orders-table');
+    tbody.innerHTML = orders.map(o => `
+        <tr>
+            <td>${o.reference_no}</td>
+            <td>Vendor #${o.vendor_id}</td>
+            <td>₹${o.total_amount}</td>
+            <td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td>
+            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-success" onclick="updateStatus(${o.id},'Confirmed')">Confirm</button>
+                <button class="btn btn-sm btn-danger"  onclick="updateStatus(${o.id},'Cancelled')">Cancel</button>
+            </td>
+        </tr>`).join('');
+}
+
+async function updateStatus(id, status) {
+    await fetch(`${API}/orders/${id}/status?status=${status}`, {method:'PUT'});
+    loadOrders();
+}
+
+// ── VENDORS ────────────────────────────────
+async function loadVendors() {
+    const vendors = await fetch(`${API}/vendors/`).then(r => r.json());
+    document.getElementById('vendors-table').innerHTML = vendors.map(v => `
+        <tr>
+            <td>${v.id}</td>
+            <td>${v.name}</td>
+            <td>${v.contact}</td>
+            <td>${'⭐'.repeat(Math.round(v.rating))} (${v.rating})</td>
+        </tr>`).join('');
+}
+
+// ── PRODUCTS ───────────────────────────────
+async function loadProducts() {
+    const products = await fetch(`${API}/products/`).then(r => r.json());
+    document.getElementById('products-table').innerHTML = products.map(p => `
+        <tr id="row-${p.id}">
+            <td>${p.id}</td>
+            <td>${p.name}</td>
+            <td>${p.sku}</td>
+            <td>₹${p.unit_price}</td>
+            <td>${p.stock_level}</td>
+            <td>${p.category || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" 
+                    onclick="getAIDescription(${p.id}, '${p.name}', '${p.category || 'General'}', this)">
+                    🤖 AI Desc
+                </button>
+            </td>
+        </tr>
+        <tr id="ai-row-${p.id}" style="display:none">
+            <td colspan="7">
+                <div class="ai-desc-box" id="ai-desc-${p.id}"></div>
+            </td>
+        </tr>`).join('');
+}
+
+// ── AI DESCRIPTION ─────────────────────────
+async function getAIDescription(id, name, category, btn) {
+    btn.innerHTML = '⏳ Loading...';
+    btn.disabled  = true;
+
+    try {
+        const res = await fetch(`${API}/ai/generate-description`, {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({product_name: name, category: category})
+        });
+        const data = await res.json();
+
+        document.getElementById(`ai-desc-${id}`).innerHTML =
+            `<b>🤖 AI Description:</b> ${data.description}`;
+        document.getElementById(`ai-row-${id}`).style.display = '';
+
+        btn.innerHTML = '✅ Done';
+    } catch(e) {
+        btn.innerHTML = '❌ Retry';
+        btn.disabled  = false;
+    }
+}
+
+// ── CREATE PO ──────────────────────────────
+async function loadCreatePO() {
+    [allVendors, allProducts] = await Promise.all([
+        fetch(`${API}/vendors/`).then(r => r.json()),
+        fetch(`${API}/products/`).then(r => r.json()),
+    ]);
+
+    const sel = document.getElementById('vendor-select');
+    sel.innerHTML = '<option value="">-- Select Vendor --</option>' +
+        allVendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+    document.getElementById('product-rows').innerHTML = '';
+    addProductRow();
+}
+
+function addProductRow() {
+    const div = document.createElement('div');
+    div.className = 'product-row row align-items-center';
+    div.innerHTML = `
+        <div class="col-md-5">
+            <select class="form-select product-select" onchange="rowChanged(this)">
+                <option value="">-- Select Product --</option>
+                ${allProducts.map(p =>
+                    `<option value="${p.id}" data-price="${p.unit_price}">${p.name} (₹${p.unit_price})</option>`
+                ).join('')}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" class="form-control qty-input" placeholder="Quantity" min="1" value="1" onchange="calculateTotal()">
+        </div>
+        <div class="col-md-2">
+            <input type="text" class="form-control price-input" placeholder="Price" readonly>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-danger btn-sm" onclick="this.closest('.product-row').remove(); calculateTotal()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>`;
+    document.getElementById('product-rows').appendChild(div);
+}
+
+function rowChanged(sel) {
+    const opt   = sel.options[sel.selectedIndex];
+    const price = opt.dataset.price || '';
+    sel.closest('.product-row').querySelector('.price-input').value = price;
+    calculateTotal();
+}
+
+function calculateTotal() {
+    let subtotal = 0;
+    document.querySelectorAll('.product-row').forEach(row => {
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+        const qty   = parseInt(row.querySelector('.qty-input').value) || 0;
+        subtotal += price * qty;
+    });
+    const tax   = subtotal * 0.05;
+    const total = subtotal + tax;
+    document.getElementById('subtotal').textContent    = '₹' + subtotal.toFixed(2);
+    document.getElementById('tax').textContent         = '₹' + tax.toFixed(2);
+    document.getElementById('grand-total').textContent = '₹' + total.toFixed(2);
+}
+
+async function submitPO() {
+    const vendorId = document.getElementById('vendor-select').value;
+    if (!vendorId) { alert('Please select a vendor!'); return; }
+
+    const items = [];
+    let valid = true;
+    document.querySelectorAll('.product-row').forEach(row => {
+        const productId = row.querySelector('.product-select').value;
+        const qty       = parseInt(row.querySelector('.qty-input').value);
+        const price     = parseFloat(row.querySelector('.price-input').value);
+        if (!productId || !qty || !price) { valid = false; return; }
+        items.push({ product_id: parseInt(productId), quantity: qty, unit_price: price });
+    });
+
+    if (!valid || items.length === 0) { alert('Please fill all product rows!'); return; }
+
+    const res = await fetch(`${API}/orders/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: parseInt(vendorId), items })
+    });
+
+    if (res.ok) {
+        alert('✅ Purchase Order created successfully!');
+        showPage('orders');
+        document.querySelector('.sidebar a:nth-child(3)').classList.remove('active');
+        document.querySelector('.sidebar a:nth-child(2)').classList.add('active');
+    } else {
+        alert('❌ Error creating order!');
+    }
+}
+
+// Load dashboard on start
+loadDashboard();
+</script>
+</body>
+</html>
